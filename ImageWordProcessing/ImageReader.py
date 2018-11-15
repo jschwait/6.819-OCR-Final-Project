@@ -3,23 +3,41 @@ import matplotlib.image as mpimg
 import numpy as np
 
 class ImageReader:
-	image = ''
+
+	def __init__(self, image_path):
+		"""
+		Creates ImageReader object to manipulate an image with
+
+		@param image_path: path of image to manipulate
+		@type image_path: string
+		"""
+		self.image = mpimg.imread(image_path)
 
 
-	def __init__(self, image_name):
-		self.image = mpimg.imread(image_name)
+	def show_image(self, picture_to_display):
+		"""
+		Displays an image to the use
 
+		@param pic: a read in image
+		@type: pic: numpy.array
 
-	def show_image(self):
-		plt.imshow(self.image)
-		plt.show()
+		@return: none, displays an image
 
-	def show_character(self, pic):
-		plt.imshow(pic)
+		"""
+		plt.imshow(picture_to_display)
 		plt.show()
 
 	def get_character_positions_from_single_line(self):
-		height, width, color = self.image.shape
+		"""
+		Obtains the pixel positions of the start and end of each
+		character in the inputted image
+
+		@return list of ints, with each element i, i+1 representing
+		the starting and ending pixel of a character in the image
+		where i%2 == 0
+
+		"""
+		height, width = self.image.shape[:2]
 		characters = []
 		for y in range(width):
 			current_column = [0, 0, 0, 0]
@@ -32,76 +50,168 @@ class ImageReader:
 				current_column[3] += self.image[i, y][3]
 			for i in range(4):
 				current_column[i] /= height
+			# 1.0 represents an all white image, which is just
+			# a space, or background
 			if np.average(current_column) != 1.0:
 				characters.append(y)
 		letters = [characters[0]]
 		for i in range(len(characters)-1):
+			# If the pixels are not consecutive, they are
+			# different letters
 			if characters[i] != characters[i+1] - 1:
 				letters.append(characters[i])
 				letters.append(characters[i+1])
+				#Get the beginning and end pixel of each letter
 		letters.append(characters[-1])
 		return letters
 
 	def characters_positions(self, letters_spots):
+		"""
+		Get the slice of the image of each character
+		on the line
+
+		@param letters_spots: the start and end of each letter 
+			in the image
+		@type letters_spots: list of ints
+
+		@return: list of numpy.array, each element of which represents
+			characters (and spaces) on a line
+
+		"""
 		character_images_subslices = []
 		letters = []
 		for i in range(0, len(letters_spots)-2, 2):
 			letters.append(letters_spots[i])
 			letters.append(letters_spots[i+1])
+			# Each two indices in letters_spots is beginning
+			# and end of individual letters/characters
 			if letters_spots[i+1] + 35 < letters_spots[i+2]:
+				# If there is more than approximately 35 pixels of 
+				# space (FOR SIZE 48 CALIBRI FONT) then it is a space
 				letters.append(letters_spots[i+1]+ 10)
 				letters.append(letters_spots[i+1] + 20)
+				# Add spaces to the letters list to dilineate words
 		letters.append(letters_spots[-2])
 		letters.append(letters_spots[-1])
-		otherpic = []
 		for i in range(0, len(letters), 2):
+			# Get subslice of image for each character
 			character_images_subslices.append(self.image[:, letters[i]:letters[i+1]])
 		return character_images_subslices
 
 	def get_words_from_characters(self, characters):
+		"""
+		Arrange spliced characters into words
+
+		@param characters: list of spliced images, each element
+		represents a single character
+		@type characters: numpy.array
+
+		@return list of numpy.array, each element of which represents
+			a word on the read in line
+
+		"""
 		spaces = []
-		for char in characters:
+		for char in range(len(characters)):
 			whitespace = True
-			height, width, color = char.shape
+			# Split words based off whitespacing
+			height, width = characters[char].shape[:2]
 			for y in range(width):
 				current_column = [0, 0, 0, 0]
 				for i in range(height):
 					# Average the entire column to see if 
-					# there is a character there
-					current_column[0] += char[i, y][0]
-					current_column[1] += char[i, y][1]
-					current_column[2] += char[i, y][2]
-					current_column[3] += char[i, y][3]
+					# any of the column is not white to 
+					# determine if there is a character there
+					current_column[0] += characters[char][i, y][0]
+					current_column[1] += characters[char][i, y][1]
+					current_column[2] += characters[char][i, y][2]
+					current_column[3] += characters[char][i, y][3]
 				for i in range(4):
 					current_column[i] /= height
-				# if count == 0:
-				# 	print(current_column)
-					# self.show_character(char)
-					# self.show_character(char)
-				if np.average(current_column) != 1.0:# and char.all() not in spaces:
+				if np.average(current_column) != 1.0:
+					# Enter this block if not a whitespace
 					whitespace = False
 					break
 			else:
-				# print(whitespace)
-				# print(current_column)
-				print(height, width)
-				self.show_character(char[1:3, 64:66])
-				for i in range(width):
-					for y in range(height):
-						print(char[2:4, 65:67])
+				# Enter this if character is a whitespace
+				# which we will save location of for further use
+				spaces.append(char)
 
-				# if whitespace:
-				# 	spaces.append(char)
-			break
-		return spaces
 
-		# word = []
-		# for char in characters:
-		# 	print(char)
-		# 	print(spaces)
-		# 	if spaces[0] != char:
-		# 		print(char)
-		# 		end = char[:]
+		lines_words = []
+		single_word = []
+		for char in range(len(characters)):
+			if char in spaces:
+				# If we encounter a space, the
+				# characters we were just iterating
+				# over is a complete word
+				lines_words.append(single_word)
+				single_word = []
+			else:
+				# Otherwise we are iterating over
+				# the same word
+				single_word.append(characters[char])
+		else:
+			# Add the last word on the line since there
+			# is no whitespace at the end of the line
+			lines_words.append(single_word)
+
+		stitched_words = []
+		for word in lines_words:
+			# Stitch each of the individual words together
+			stitched_words.append(self.stitch_characters(word))
+
+		return stitched_words
+
+	def concatonate_images(self, im1, im2):
+		"""
+		Stitches two images together into one side by side image
+
+		@param im1: the left side of the desired stitched image
+		@type im1: numpy.array
+		@param im2: the right side of the desired stitched image
+		@type im2: numpy.array
+
+		@return a new numpy.array of the two inputted images
+			stitched together images side by side
+
+		"""
+		height1, width1 = im1.shape[:2]
+		height2, width2 = im2.shape[:2]
+
+		# Total width is the combination
+		# of the two individual images
+		total_width = width1 + width2
+
+		# Create new empty image of correct height and width
+		new_image = np.zeros(shape=(height1, total_width, 4))
+		# First part of image is image 1
+		new_image[:height1, :width1] = im1
+		# Second part of image is image 2
+		new_image[:height2, width1:width1+width2] = im2
+
+		return new_image	
+
+	def stitch_characters(self, characters):
+		"""
+		Combines characters together to get the word
+
+		@param characters: list of images of characters
+		@type characters: list of numpy.array
+
+		@return a completely stitched together image of
+			all the elements of characters side by side
+		"""
+		output = None
+		for i, img in enumerate(characters):
+			if i == 0:
+				# First element is the base case
+				output = img
+			else:
+				# Otherwise stitch the rest of the characters
+				# to the right of the preceding character
+				output = self.concatonate_images(output, img)
+		return output
+
 
 
 
@@ -111,8 +221,10 @@ class ImageReader:
 
 
 testImage = ImageReader('cupcakesSentence.png')
+testImage = ImageReader('VeryNiceSentence.png')
 letters_positions = testImage.get_character_positions_from_single_line()
 character_images = testImage.characters_positions(letters_positions)
-spaces = testImage.get_words_from_characters(character_images)
-# for i in spaces:
-# 	testImage.show_character(i)
+words = testImage.get_words_from_characters(character_images)
+
+for i in words:
+	testImage.show_image(i)
