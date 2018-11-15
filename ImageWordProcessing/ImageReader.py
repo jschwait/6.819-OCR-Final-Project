@@ -65,6 +65,64 @@ class ImageReader:
 		letters.append(characters[-1])
 		return letters
 
+	def get_lines_from_paragraph(self):
+		"""
+		Separates lines of a paragraph
+
+		@return: list of numpy.array, each element of which
+			represents lines of the inputted paragraph
+
+		"""
+		height, width = self.image.shape[:2]
+		lines = []
+		for y in range(height):
+			current_column = [0, 0, 0, 0]
+			for i in range(width):
+				# Average the entire row to see if 
+				# there is are any words there
+				current_column[0] += self.image[y, i][0]
+				current_column[1] += self.image[y, i][1]
+				current_column[2] += self.image[y, i][2]
+				current_column[3] += self.image[y, i][3]
+			for i in range(4):
+				current_column[i] /= width
+			# 1.0 represents an all white image, which is just
+			# a space, or background
+			if np.average(current_column) != 1.0:
+				lines.append(y)
+		line_indices = [lines[0]]
+		for i in range(len(lines)-1):
+			# If the pixels are not consecutive, they are
+			# different lines
+			if lines[i] != lines[i+1] - 1:
+				line_indices.append(lines[i])
+				line_indices.append(lines[i+1])
+				# Get the beginning and end pixel of each line
+		line_indices.append(lines[-1])
+
+		lines_subslices = []
+		for i in range(0, len(line_indices), 2):
+			# Get subslice of image for each line of text
+			# +/- 10 is arbitrary for now to get the lines
+			# need to fix later to make general
+			# TODO
+			lines_subslices.append(self.image[line_indices[i]-10:line_indices[i+1]+10, :])
+
+		count = 0
+		# Save each new line as its own image so it can be split
+		# further into words and characters
+		for i in range(len(lines_subslices)):
+			mpimg.imsave("image" + str(count) + ".png", lines_subslices[i])
+			count += 1
+
+		count = 0
+		# Make each line its own ImageReader to be processed further
+		for i in range(len(lines_subslices)):
+			lines_subslices[i] = ImageReader("image" + str(count) + ".png")
+			count += 1
+
+		return lines_subslices
+
 	def characters_positions(self, letters_spots):
 		"""
 		Get the slice of the image of each character
@@ -80,6 +138,7 @@ class ImageReader:
 		"""
 		character_images_subslices = []
 		letters = []
+		# print(letters_spots)
 		for i in range(0, len(letters_spots)-2, 2):
 			letters.append(letters_spots[i])
 			letters.append(letters_spots[i+1])
@@ -88,7 +147,9 @@ class ImageReader:
 			if letters_spots[i+1] + 35 < letters_spots[i+2]:
 				# If there is more than approximately 35 pixels of 
 				# space (FOR SIZE 48 CALIBRI FONT) then it is a space
-				letters.append(letters_spots[i+1]+ 10)
+				# 35 is somewhat arbitrary, need to fix later to make general
+				# TODO
+				letters.append(letters_spots[i+1] + 10)
 				letters.append(letters_spots[i+1] + 20)
 				# Add spaces to the letters list to dilineate words
 		letters.append(letters_spots[-2])
@@ -220,11 +281,38 @@ class ImageReader:
 
 
 
-testImage = ImageReader('cupcakesSentence.png')
-testImage = ImageReader('VeryNiceSentence.png')
-letters_positions = testImage.get_character_positions_from_single_line()
-character_images = testImage.characters_positions(letters_positions)
-words = testImage.get_words_from_characters(character_images)
+# testImage = ImageReader('cupcakesSentence.png')
+# testImage = ImageReader('VeryNiceSentence.png')
+# testImage = ImageReader('niceDay.png')
+testImage = ImageReader('paragraph.png')
 
-for i in words:
-	testImage.show_image(i)
+
+lines = testImage.get_lines_from_paragraph()
+
+# Shows each line
+for line in lines:
+	line.show_image(line.image)
+
+letters_positions = []
+character_images = []
+for line in range(len(lines)):
+	letters_positions.append(lines[line].get_character_positions_from_single_line())
+	# Get each character on the line
+	character_images.append(lines[line].characters_positions(letters_positions[line]))
+
+# Shows each character on each line
+for line in range(len(lines)):
+	for char in character_images[line]:
+		lines[line].show_image(char)
+
+
+lines_of_words = []
+for line in range(len(lines)):
+	# Get each word from the parsed paragraph
+	lines_of_words.append(lines[line].get_words_from_characters(character_images[line]))
+
+# On each line
+for line in lines_of_words:
+	# Print each word on the line
+	for word in line:
+		lines[0].show_image(word)
