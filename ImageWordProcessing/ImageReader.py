@@ -52,7 +52,7 @@ class ImageReader:
 				current_column[i] /= height
 			# 1.0 represents an all white image, which is just
 			# a space, or background
-			if np.average(current_column) != 1.0:
+			if np.average(current_column) < .98:
 				characters.append(y)
 		letters = [characters[0]]
 		for i in range(len(characters)-1):
@@ -138,19 +138,23 @@ class ImageReader:
 		"""
 		character_images_subslices = []
 		letters = []
-		# print(letters_spots)
+		dist = 0
+		for i in range(0, len(letters_spots)-2, 2):
+			dist += letters_spots[i+1] - letters_spots[i]
+		dist /= len(letters_spots)
 		for i in range(0, len(letters_spots)-2, 2):
 			letters.append(letters_spots[i])
 			letters.append(letters_spots[i+1])
 			# Each two indices in letters_spots is beginning
 			# and end of individual letters/characters
-			if letters_spots[i+1] + 35 < letters_spots[i+2]:
-				# If there is more than approximately 35 pixels of 
-				# space (FOR SIZE 48 CALIBRI FONT) then it is a space
-				# 35 is somewhat arbitrary, need to fix later to make general
-				# TODO
-				letters.append(letters_spots[i+1] + 10)
-				letters.append(letters_spots[i+1] + 20)
+			# print(letters_spots[i+1], letters_spots[i+2])
+			if letters_spots[i+1] + dist < letters_spots[i+2]:
+				# If there is more than the average number of
+				# pixels between each letter, then there is 
+				# a space between the letters and I must append
+				# a space between the letters to my letters array
+				letters.append(letters_spots[i+1] + int(dist))
+				letters.append(letters_spots[i+1] + int(dist)+1)
 				# Add spaces to the letters list to dilineate words
 		letters.append(letters_spots[-2])
 		letters.append(letters_spots[-1])
@@ -276,19 +280,19 @@ class ImageReader:
 
 
 
-
-
-
-
-
+# Size 48 font
 # testImage = ImageReader('cupcakesSentence.png')
+# Size 48 font
 # testImage = ImageReader('VeryNiceSentence.png')
+# Size 11 font
 # testImage = ImageReader('niceDay.png')
+# Size 48 font
 testImage = ImageReader('paragraph.png')
 
 
 lines = testImage.get_lines_from_paragraph()
 
+print('1. Lines')
 # Shows each line
 for line in lines:
 	line.show_image(line.image)
@@ -301,9 +305,10 @@ for line in range(len(lines)):
 	character_images.append(lines[line].characters_positions(letters_positions[line]))
 
 # Shows each character on each line
-for line in range(len(lines)):
-	for char in character_images[line]:
-		lines[line].show_image(char)
+# print('2. Characters')
+# for line in range(len(lines)):
+# 	for char in character_images[line]:
+# 		lines[line].show_image(char)
 
 
 lines_of_words = []
@@ -311,6 +316,7 @@ for line in range(len(lines)):
 	# Get each word from the parsed paragraph
 	lines_of_words.append(lines[line].get_words_from_characters(character_images[line]))
 
+print('3. Words')
 # On each line
 for line in lines_of_words:
 	# Print each word on the line
