@@ -112,7 +112,7 @@ class ImageReader:
 			# +/- 10 is arbitrary for now to get the lines
 			# need to fix later to make general
 			# TODO
-			lines_subslices.append(self.image[line_indices[i]-10:line_indices[i+1]+10, :])
+			lines_subslices.append(self.image[line_indices[i]:line_indices[i+1], :])
 
 		count = 0
 		# Save each new line as its own image so it can be split
@@ -153,8 +153,7 @@ class ImageReader:
 			letters.append(letters_spots[i+1])
 			# Each two indices in letters_spots is beginning
 			# and end of individual letters/characters
-			# print(letters_spots[i+1], letters_spots[i+2])
-			if letters_spots[i+1] + dist < letters_spots[i+2]:
+			if letters_spots[i+1] + dist '''+ 1 works for some but not others'''  < letters_spots[i+2]:
 				# If there is more than the average number of
 				# pixels between each letter, then there is 
 				# a space between the letters and I must append
@@ -198,7 +197,7 @@ class ImageReader:
 					current_column[3] += characters[char][i, y][3]
 				for i in range(4):
 					current_column[i] /= height
-				if np.average(current_column) != 1.0:
+				if np.average(current_column) < .95:
 					# Enter this block if not a whitespace
 					whitespace = False
 					break
@@ -292,10 +291,17 @@ class ImageReader:
 # testImage = ImageReader('VeryNiceSentence.png')
 # Size 11 font
 # testImage = ImageReader('niceDay.png')
-# Size 48 font
-# testImage = ImageReader('paragraph.png')
+# Small font
+# testImage = ImageReader('testImages/paragraph.png')
 # Size 11 font paragraph
-testImage = ImageReader('LongParagraph.png')
+# testImage = ImageReader('LongParagraph.png')
+
+# Testing stuff
+testImage = ImageReader('testImages/paragraph.png')
+
+
+# DOESNT WORK
+# testImage = ImageReader('testImages/paragraph3.png')
 
 
 lines = testImage.get_lines_from_paragraph()
@@ -313,7 +319,7 @@ for line in range(len(lines)):
 	character_images.append(lines[line].characters_positions(letters_positions[line]))
 
 # Shows each character on each line
-# print('2. Characters')
+print('2. Characters')
 # for line in range(len(lines)):
 # 	for char in character_images[line]:
 # 		lines[line].show_image(char)
