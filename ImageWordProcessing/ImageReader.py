@@ -2,6 +2,12 @@ import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 import numpy as np
 
+
+"""
+Image object which splits the picture into separate lines, characters,
+and words.  The image of the text to be split up MUST BE FULL SCREEN
+WHEN TRYING TO BE SPLIT UP
+"""
 class ImageReader:
 
 	def __init__(self, image_path):
@@ -287,15 +293,17 @@ class ImageReader:
 # Size 11 font
 # testImage = ImageReader('niceDay.png')
 # Size 48 font
-testImage = ImageReader('paragraph.png')
+# testImage = ImageReader('paragraph.png')
+# Size 11 font paragraph
+testImage = ImageReader('LongParagraph.png')
 
 
 lines = testImage.get_lines_from_paragraph()
 
 print('1. Lines')
 # Shows each line
-for line in lines:
-	line.show_image(line.image)
+# for line in lines:
+# 	line.show_image(line.image)
 
 letters_positions = []
 character_images = []
