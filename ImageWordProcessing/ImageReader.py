@@ -109,9 +109,6 @@ class ImageReader:
 		lines_subslices = []
 		for i in range(0, len(line_indices), 2):
 			# Get subslice of image for each line of text
-			# +/- 10 is arbitrary for now to get the lines
-			# need to fix later to make general
-			# TODO
 			lines_subslices.append(self.image[line_indices[i]:line_indices[i+1], :])
 
 		count = 0
@@ -153,7 +150,7 @@ class ImageReader:
 			letters.append(letters_spots[i+1])
 			# Each two indices in letters_spots is beginning
 			# and end of individual letters/characters
-			if letters_spots[i+1] + dist '''+ 1 works for some but not others'''  < letters_spots[i+2]:
+			if letters_spots[i+1] + dist < letters_spots[i+2]:
 				# If there is more than the average number of
 				# pixels between each letter, then there is 
 				# a space between the letters and I must append
@@ -297,7 +294,7 @@ class ImageReader:
 # testImage = ImageReader('LongParagraph.png')
 
 # Testing stuff
-testImage = ImageReader('testImages/paragraph.png')
+testImage = ImageReader('testImages/image.png')
 
 
 # DOESNT WORK
