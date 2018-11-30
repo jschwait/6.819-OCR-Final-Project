@@ -282,23 +282,8 @@ class ImageReader:
 
 
 
-# Size 48 font
-# testImage = ImageReader('cupcakesSentence.png')
-# Size 48 font
-# testImage = ImageReader('VeryNiceSentence.png')
-# Size 11 font
-# testImage = ImageReader('niceDay.png')
-# Small font
-# testImage = ImageReader('testImages/paragraph.png')
-# Size 11 font paragraph
-# testImage = ImageReader('LongParagraph.png')
-
-# Testing stuff
-testImage = ImageReader('testImages/image.png')
-
-
-# DOESNT WORK
-# testImage = ImageReader('testImages/paragraph3.png')
+# font: Century Gotchic; size: 11
+testImage = ImageReader('screenParagraph.png')
 
 
 lines = testImage.get_lines_from_paragraph()
@@ -333,3 +318,8 @@ for line in lines_of_words:
 	# Print each word on the line
 	for word in line:
 		lines[0].show_image(word)
+# total = 0
+# for line in lines_of_words:
+# 	for word in line:
+# 		total += 1
+# print(total)
